@@ -18,6 +18,7 @@ from data.scheduler import *
 from tqdm import tqdm
 from datetime import datetime
 device = torch.device("cpu")
+from loss.losses import edge_loss
 opt = option().parse_args()
 
 def seed_torch():
@@ -58,7 +59,9 @@ def train(epoch):
         gt_hvi = model.HVIT(gt_rgb)
         loss_hvi = L1_loss(output_hvi, gt_hvi) + D_loss(output_hvi, gt_hvi) + E_loss(output_hvi, gt_hvi) + opt.P_weight * P_loss(output_hvi, gt_hvi)[0]
         loss_rgb = L1_loss(output_rgb, gt_rgb) + D_loss(output_rgb, gt_rgb) + E_loss(output_rgb, gt_rgb) + opt.P_weight * P_loss(output_rgb, gt_rgb)[0]
-        loss = loss_rgb + opt.HVI_weight * loss_hvi
+        loss_e = edge_loss(output_rgb, gt_rgb)
+
+        loss = loss_rgb + opt.HVI_weight * loss_hvi + 0.05 * loss_e
         iter += 1
         
         if opt.grad_clip:
